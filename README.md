@@ -51,7 +51,7 @@ ComfyUI-LLM_Prompt_Xml_Formatter提供两个节点：
 
    ## 参考工作流
 
-   即代码库中的`WorkFlowExample.json`，打开Comfy-UI，按<kbd>Ctrl</kbd>+<kbd>O</kbd>，选择此图片，即可加载示例工作流。
+   即代码库中的`WorkFlowExample.json`，打开Comfy-UI，按<kbd>Ctrl</kbd>+<kbd>O</kbd>，选择此文件，即可加载示例工作流。
    
    该工作流还使用了[ComfyUI-Custom-Scripts](https://github.com/pythongosssss/ComfyUI-Custom-Scripts)的节点，和[SADA加速器](https://github.com/liming123332/comfyui-sada-icml)的节点。这些节点都不必须，跳过后工作流仍然可以正常运行。
 
@@ -65,4 +65,7 @@ ComfyUI-LLM_Prompt_Xml_Formatter提供两个节点：
 
 将该文件夹放置在`...\ComfyUI\custom_nodes\`目录下，重启Comfy-UI即可。
 
+  ## 成本提示
+
+  每调用一次LLM Xml Prompt Formatter的成本约为$0.0012（使用`deepseek-chat`模型）。
 
