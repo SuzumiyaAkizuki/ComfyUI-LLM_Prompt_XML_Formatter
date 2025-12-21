@@ -28,6 +28,67 @@ ComfyUI-LLM_Prompt_Xml_Formatter提供两个节点：
 
    **使用说明：** `system prompt.txt`为大模型使用的预设提示词，其中内置`deepseek`破限命令。建议使用`deepseek-chat`或`gemini-3-flash`进行生成。
 
+   示例输入：
+
+   ```
+   A:(loli,(blonde hair:1.2),hair between eyes,short hair,ahoge,twintails,short tail,short_kimono,white socks,Frilled socks,converse,sash,red_sash,sidelocks,low twintails, fingerless gloves, haori,shorts under skirt,hairclip,leg belt)
+   
+   B:(white hair,high ponytail,white serafuku,short sleeves,short skirt,shirt tucked in,knee pads,elbow pads,fingerless gloves,white legwear,kneehighs,high-top hiking sneakers,sidelocks,shorts under skirt,)
+   
+   在一个科幻风格的指挥所中，画面左侧，A担任一场战役的指挥官。她戴着耳麦，正在指挥战役。指挥所里有全息显示的显示屏和地图。画面右侧，B穿着战术马甲、戴着头盔、拿着狙击步枪，正在执行作战任务。这两个场景的画面要有机地融合在一起，动漫风格、油画风格。
+   ```
+
+   示例输出：
+
+   `xml_out`：
+
+   ```xml
+   You are the greatest anime artist in the entire universe. Your figures are always clear, especially in facial detail. Your compositions always adhere to the golden ratio. Your perspectives are perfectly chosen. The scenes in your works always fit the setting. Your lighting is particularly atmospheric.Now draw a picture based on the prompts below.You are an assistant designed to generate anime images based on xml format textual prompts.  <Prompt Start>
+   {
+     <character_1>
+     <n>A</n>
+     <gender>1girl</gender>
+     <appearance>loli, blonde_hair:1.2, hair_between_eyes, short_hair, ahoge, twintails, short_tail, sidelocks, low_twintails, hairclip</appearance>
+     <clothing>short_kimono, white_socks, frilled_socks, converse, sash, red_sash, fingerless_gloves, haori, shorts_under_skirt, leg_belt</clothing>
+     <expression>serious, focused</expression>
+     <action>wearing_headset, commanding, pointing_at_hologram</action>
+     <position>left_side</position>
+     </character_1>
+   
+     <character_2>
+     <n>B</n>
+     <gender>1girl</gender>
+     <appearance>white_hair, high_ponytail, sidelocks</appearance>
+     <clothing>white_serafuku, short_sleeves, short_skirt, shirt_tucked_in, knee_pads, elbow_pads, fingerless_gloves, white_legwear, kneehighs, high-top_hiking_sneakers, shorts_under_skirt, tactical_vest, helmet</clothing>
+     <expression>determined, focused</expression>
+     <action>holding_sniper_rifle, aiming, in_combat_stance</action>
+     <position>right_side</position>
+     </character_2>
+   
+     <general_tags>
+     <count>2girls</count>
+     <style>anime_style, oil_painting_style</style>
+     <background>sci-fi_command_center, holographic_displays, tactical_map, futuristic_technology</background>
+     <atmosphere>tense, strategic</atmosphere>
+     <lighting>dramatic_lighting, neon_glow</lighting>
+     <quality>very_aesthetic, masterpiece, no_text</quality>
+     <resolution>max_high_resolution</resolution>
+     <artist>rella,maccha_\(mochancc\),tidsean,wlop,ciloranko,atdan,year 2024</artist>
+     <objects>headset, sniper_rifle, tactical_gear, holograms</objects>
+     </general_tags>
+     
+     "caption":In a futuristic sci-fi command center with glowing holographic displays and tactical maps, two girls are shown in different roles. On the left side, a blonde loli girl with short twintails and an ahoge wears a short kimono with a red sash, fingerless gloves, and converse shoes. She's wearing a headset and intensely pointing at holographic projections while commanding a battle. On the right side, a white-haired girl in a white serafuku uniform with tactical vest and helmet holds a sniper rifle in combat stance, wearing knee pads and hiking sneakers. The two scenes are seamlessly blended together with dramatic neon lighting casting blue and orange hues across the high-tech environment.
+   }
+   ```
+
+   `text_out`：
+
+   ```
+   画面描绘了一个未来科幻风格的指挥中心，充满全息显示屏和战术地图的蓝光投影。左侧是一位金发双马尾的萝莉指挥官，穿着短和服配红色腰带，戴着耳机正在专注地指挥战斗，手指指向全息投影。右侧是一位白发高马尾的少女，穿着白色水手服搭配战术背心和头盔，手持狙击步枪处于战斗姿态，膝盖和手肘都戴着护具。两个场景通过戏剧性的霓虹灯光效完美融合，蓝橙相间的光线在高科技环境中交织。指挥中心的未来感装备与两位少女的不同战斗角色形成鲜明对比。
+   ```
+
+   
+
 2. Xml Style Injecto
 
    **功能：** 替换`xml`格式提示词中的风格信息
@@ -55,8 +116,10 @@ ComfyUI-LLM_Prompt_Xml_Formatter提供两个节点：
    
    该工作流还使用了[ComfyUI-Custom-Scripts](https://github.com/pythongosssss/ComfyUI-Custom-Scripts)的节点，和[SADA加速器](https://github.com/liming123332/comfyui-sada-icml)的节点。这些节点都不必须，跳过后工作流仍然可以正常运行。
 
-   ## 安装方法
+   
 
+   ## 安装方法
+   
    点击本页面中绿色按钮`<>Code`，点击Download ZIP，将会下载一个压缩包。
    
    ![下载按钮](https://akizukipic.oss-cn-beijing.aliyuncs.com/img/202512211546384.png)
@@ -67,5 +130,5 @@ ComfyUI-LLM_Prompt_Xml_Formatter提供两个节点：
 
   ## 成本提示
 
-  每调用一次LLM Xml Prompt Formatter的成本约为$0.0012（使用`deepseek-chat`模型）。
+每调用一次LLM Xml Prompt Formatter的成本约为$0.0012（使用`deepseek-chat`模型）。
 
