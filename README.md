@@ -1,0 +1,2 @@
+# ComfyUI-LLM_Prompt_XML_Formatter
+使用LLM API自动生成适用于NewBie模型的XML风格提示词，并调整画面风格
