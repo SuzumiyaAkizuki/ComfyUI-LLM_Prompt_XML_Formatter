@@ -28,8 +28,8 @@ ComfyUI-LLM_Prompt_Xml_Formatter提供两个节点：
 
    **使用说明：** `system prompt.txt`为大模型使用的预设提示词，其中内置基本破限命令。以下是推荐的模型：
 
-   - 节约成本，支持R-18G提示，不支持少数`R-18`提示：`deepseek-chat`
-   - 效果最好，支持`R-18`提示：`gemini-3-flash`
+   - 节约成本，支持R-18G提示，不支持少数R-18提示：`deepseek-chat`
+   - 效果最好，支持R-18提示：`gemini-3-flash`
    - 支持大部分NSFW提示：`grok-4-fast`
 
    示例输入：
@@ -184,6 +184,7 @@ ComfyUI-LLM_Prompt_Xml_Formatter提供两个节点：
    每调用一次LLM Xml Prompt Formatter的成本约为$0.0012（使用`deepseek-chat`模型）。
 
    使用此工作流生成的**图片原图中，会包含你的API key信息**，敬请留意。此问题将在下一版本中解决。
+
 
 
 
