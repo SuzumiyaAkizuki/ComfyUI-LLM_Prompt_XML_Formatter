@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON 简易编辑器</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --bg: #f4f7f6;
+            --panel-bg: #ffffff;
+            --border: #ddd;
+            --text: #333;
+        }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; }
+        
+        /* 顶部导航 */
+        header { background: var(--primary); color: white; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { font-size: 1.2rem; margin: 0; }
+        .tips { font-size: 0.8rem; opacity: 0.9; }
+
+        /* 主布局 */
+        .container { display: flex; flex: 1; overflow: hidden; }
+        .panel { flex: 1; display: flex; flex-direction: column; padding: 15px; border-right: 1px solid var(--border); overflow: hidden; }
+        .panel:last-child { border-right: none; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: bold; color: var(--primary); }
+        
+        /* 按钮 */
+        button { background: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; transition: 0.2s; margin-left: 5px; }
+        button:hover { background: #357abd; }
+        button.secondary { background: #999; }
+        button.secondary:hover { background: #777; }
+        button.danger { background: #e74c3c; }
+        button.danger:hover { background: #c0392b; }
+        
+        textarea { flex: 1; width: 100%; border: 1px solid var(--border); border-radius: 4px; padding: 10px; font-family: 'Consolas', monospace; font-size: 0.9rem; resize: none; box-sizing: border-box; }
+        textarea:focus { outline: 2px solid var(--primary); border-color: transparent; }
+
+        /* 工具栏 */
+        .toolbar { padding: 5px 0; display: flex; gap: 5px; flex-wrap: wrap; }
+        .file-input-wrapper { display: inline-block; position: relative; }
+        input[type="file"] { position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+
+        /* 编辑器样式 */
+        #editor-container { flex: 1; overflow-y: auto; border: 1px solid var(--border); background: #fff; padding: 10px; border-radius: 4px; }
+        .json-node { margin-left: 20px; padding: 2px 0; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9rem; border-left: 1px dashed #eee; white-space: nowrap; }
+        .json-key { color: #881391; font-weight: bold; cursor: text; margin-right: 5px; }
+        
+        .json-val { padding: 2px 4px; border: 1px solid transparent; border-radius: 2px; outline: none; }
+        .json-val:hover, .json-key:hover { border-color: #ddd; background: #f9f9f9; }
+        .json-val:focus, .json-key:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 3px rgba(74, 144, 226, 0.3); }
+
+        .node-controls { opacity: 0.3; margin-left: 10px; transition: 0.2s; visibility: hidden; }
+        .json-node-row:hover .node-controls { opacity: 1; visibility: visible; }
+        
+        .collapser { cursor: pointer; display: inline-block; width: 12px; text-align: center; color: #555; user-select: none; }
+        
+        /* 加上 quote 样式，让用户知道这是字符串 */
+        .quote { color: #555; font-weight: normal; user-select: none; }
+        
+        .type-string { color: #c41a16; }
+        .type-number { color: #1c00cf; }
+        .type-boolean { color: #0d22aa; }
+        .type-null { color: #808080; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🔧 JSON 简易编辑器</h1>
+    <div class="tips"> </div>
+</header>
+
+<div class="container">
+    <!-- 左侧面板 -->
+    <div class="panel" style="flex: 0.8;">
+        <div class="panel-header">📝 文本 <-> JSON字符串</div>
+        <textarea id="rawText" placeholder="在此输入多行文本..."></textarea>
+        <div class="toolbar">
+            <div class="file-input-wrapper">
+                <button class="secondary">📂 导入文件</button>
+                <input type="file" onchange="loadFile(this, 'rawText')">
+            </div>
+            <button onclick="downloadFile('rawText')" class="secondary">💾 下载</button>
+            <div style="flex:1"></div>
+            <button onclick="textToJson()">⬇️ 转为JSON串</button>
+            <button onclick="jsonToText()">⬆️ 转回文本</button>
+        </div>
+        <textarea id="jsonString" placeholder='在此输入JSON转义后的字符串 (例如 "Line1\nLine2")...'></textarea>
+        <div class="toolbar">
+             <button onclick="copyToClipboard('jsonString')">📑 复制结果</button>
+        </div>
+    </div>
+
+    <!-- 右侧面板 -->
+    <div class="panel">
+        <div class="panel-header">
+            <span>🌳 原生 JSON 编辑器</span>
+            <div>
+                 <button onclick="resetEditor()">🆕 新建</button>
+                 <button onclick="syncToView()" class="secondary">🔄 刷新视图</button>
+            </div>
+        </div>
+        <div id="editor-container"></div>
+        <div class="toolbar" style="border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px;">
+            <div class="file-input-wrapper">
+                <button class="secondary">📂 导入JSON</button>
+                <input type="file" onchange="loadJsonFile(this)">
+            </div>
+            <button onclick="exportJsonFile()" class="secondary">💾 下载JSON</button>
+            <button onclick="copyEditorJson()">📑 复制JSON</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 左侧 文本处理逻辑 ---
+    function textToJson() {
+        const raw = document.getElementById('rawText').value;
+        const jsonStr = JSON.stringify(raw);
+        document.getElementById('jsonString').value = jsonStr;
+    }
+    function jsonToText() {
+        let jsonStr = document.getElementById('jsonString').value.trim();
+        if (!jsonStr) return;
+        try {
+            const text = JSON.parse(jsonStr);
+            if (typeof text !== 'string') {
+                alert('解析结果不是纯文本字符串，可能是对象或数组。');
+                return;
+            }
+            document.getElementById('rawText').value = text;
+        } catch (e) {
+            alert('JSON 解析失败，请确保格式正确。\n' + e.message);
+        }
+    }
+    function loadFile(input, targetId) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById(targetId).value = e.target.result;
+            input.value = '';
+        };
+        reader.readAsText(file);
+    }
+    function downloadFile(sourceId) {
+        const content = document.getElementById(sourceId).value;
+        if (!content) return;
+        const blob = new Blob([content], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "result.txt"; a.click();
+        URL.revokeObjectURL(url);
+    }
+    async function copyToClipboard(sourceId) {
+        const content = document.getElementById(sourceId).value;
+        try { await navigator.clipboard.writeText(content); alert('复制成功！'); } catch (err) {}
+    }
+
+    // --- 右侧 JSON编辑器核心逻辑 ---
+    
+    let editorData = { 
+        "intro": "Line1\nLine2\tTabbed",
+        "path": "C:\\Windows\\System32",
+        "config": { "debug": true, "timeout": 5000 },
+        "list": ["Item 1", "Item 2\nWith Break"]
+    };
+
+    const container = document.getElementById('editor-container');
+
+    function renderEditor() {
+        container.innerHTML = '';
+        container.appendChild(createNode(editorData, 'root', null));
+    }
+
+    function createNode(data, key, parent, isArrayItem = false, index = null) {
+        const type = data === null ? 'null' : Array.isArray(data) ? 'array' : typeof data;
+        
+        const row = document.createElement('div');
+        row.className = 'json-node-row';
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        
+        // 1. 折叠器
+        const collapser = document.createElement('span');
+        collapser.className = 'collapser';
+        if (type === 'object' || type === 'array') {
+            collapser.textContent = '▼';
+            collapser.onclick = (e) => {
+                const children = e.target.closest('.json-node-container').querySelector('.children');
+                const isHidden = children.style.display === 'none';
+                children.style.display = isHidden ? 'block' : 'none';
+                collapser.textContent = isHidden ? '▼' : '▶';
+            };
+        } else {
+            collapser.innerHTML = '&nbsp;';
+        }
+        row.appendChild(collapser);
+
+        // 2. Key 显示
+        if (key !== 'root') {
+            const keySpan = document.createElement('span');
+            keySpan.className = 'json-key';
+            keySpan.contentEditable = (key !== 'root' && !isArrayItem);
+            keySpan.textContent = isArrayItem ? `[${index}]` : key;
+            // 数组Key不加引号，对象Key视觉上加个引号感觉更像File但这里保持简洁
+            if(!isArrayItem) {
+                // key编辑逻辑
+                keySpan.onblur = function() {
+                    const newKey = this.textContent.trim();
+                    if (newKey === key || newKey === '') { this.textContent = key; return; }
+                    if (parent.hasOwnProperty(newKey)) { alert('Key已存在'); this.textContent = key; return; }
+                    parent[newKey] = parent[key];
+                    delete parent[key];
+                    renderEditor(); // 需要完全重绘来更新引用
+                };
+            }
+            row.appendChild(keySpan);
+            row.appendChild(document.createTextNode(': '));
+        }
+
+        // 3. Value 显示 (核心修改点)
+        if (type === 'object' || type === 'array') {
+            const typeSpan = document.createElement('span');
+            typeSpan.style.color = '#888';
+            typeSpan.style.fontSize = '0.8em';
+            typeSpan.textContent = type === 'object' ? '{Object}' : `[Array(${data.length})]`;
+            row.appendChild(typeSpan);
+        } else {
+            // 将值包裹在 span 里
+            const valWrapper = document.createElement('span');
+            
+            // 如果是字符串，加上视觉上的引号
+            if (type === 'string') {
+                const q1 = document.createElement('span'); q1.className = 'quote'; q1.textContent = '"';
+                row.appendChild(q1);
+            }
+
+            const valSpan = document.createElement('span');
+            valSpan.className = `json-val type-${type}`;
+            valSpan.contentEditable = true;
+
+            // --- 核心修改：使用 JSON.stringify 获取原始源码表示，然后去掉首尾引号 ---
+            if (type === 'string') {
+                // 例如: 数据是 "A\nB" (长度3) -> stringify -> "A\\nB" (带引号) -> slice -> A\\nB
+                let rawString = JSON.stringify(data);
+                if (rawString.startsWith('"') && rawString.endsWith('"')) {
+                    rawString = rawString.slice(1, -1);
+                }
+                valSpan.textContent = rawString;
+            } else {
+                valSpan.textContent = String(data);
+            }
+            
+            // --- 核心修改：编辑保存逻辑 ---
+            valSpan.onblur = function() {
+                let text = this.textContent; // 获取用户输入的文本，例如 A\nB
+                let newVal;
+
+                if (type === 'string') {
+                    try {
+                        // 补上引号，尝试还原为 JavaScript 字符串
+                        // 如果用户输入 A\nB，拼接成 "A\nB"，parse 后变成 真实换行符的字符串
+                        newVal = JSON.parse('"' + text + '"');
+                    } catch (e) {
+                        alert("字符串格式错误！\n如果您想输入引号，请使用 \\\" 转义。\n如果您想输入反斜杠，请使用 \\\\。");
+                        // 还原显示
+                        let oldRaw = JSON.stringify(data).slice(1, -1);
+                        this.textContent = oldRaw;
+                        this.focus();
+                        return;
+                    }
+                } else if (type === 'number') {
+                    newVal = Number(text);
+                    if (isNaN(newVal)) { alert('请输入有效数字'); this.textContent = data; return; }
+                } else if (type === 'boolean') {
+                    newVal = (text.toLowerCase() === 'true');
+                } else if (type === 'null') {
+                    newVal = null;
+                }
+
+                // 更新数据
+                if (key === 'root') editorData = newVal;
+                else if (isArrayItem) parent[index] = newVal;
+                else parent[key] = newVal;
+                
+                // 为了保证颜色和格式正确，稍微刷新一下当前节点的样式（其实string类型不需要变）
+                // 只有类型变了才需要大刷，这里为了对齐数据，简单处理
+                if(type !== 'string') this.textContent = String(newVal); 
+                else {
+                    // 对于string，回显保存后的 raw 格式 (处理自动清理多余转义等情况)
+                    let savedRaw = JSON.stringify(newVal).slice(1, -1);
+                    this.textContent = savedRaw;
+                }
+            };
+
+            row.appendChild(valSpan);
+
+            if (type === 'string') {
+                const q2 = document.createElement('span'); q2.className = 'quote'; q2.textContent = '"';
+                row.appendChild(q2);
+            }
+        }
+
+        // 4. 操作按钮 (+ 和 x)
+        const controls = document.createElement('span');
+        controls.className = 'node-controls';
+        
+        if (type === 'object' || type === 'array') {
+            const addBtn = document.createElement('button');
+            addBtn.textContent = '+';
+            addBtn.style.padding = '0 5px';
+            addBtn.onclick = () => {
+                if (type === 'array') data.push("new item");
+                else {
+                    let k = prompt("新 Key:", "key");
+                    if (k && !data.hasOwnProperty(k)) data[k] = "value";
+                }
+                renderEditor();
+            };
+            controls.appendChild(addBtn);
+        }
+
+        if (key !== 'root') {
+            const delBtn = document.createElement('button');
+            delBtn.className = 'danger';
+            delBtn.textContent = '×';
+            delBtn.style.padding = '0 6px';
+            delBtn.onclick = () => {
+                // 不再弹窗确认，加快编辑速度，按需可恢复
+                if (isArrayItem) parent.splice(index, 1);
+                else delete parent[key];
+                renderEditor();
+            };
+            controls.appendChild(delBtn);
+        }
+        row.appendChild(controls);
+
+        // 5. 递归渲染子容器
+        const nodeContainer = document.createElement('div');
+        nodeContainer.className = 'json-node-container';
+        if (key !== 'root') nodeContainer.className += ' json-node';
+        nodeContainer.appendChild(row);
+
+        if (type === 'object' || type === 'array') {
+            const childrenDiv = document.createElement('div');
+            childrenDiv.className = 'children';
+            if (type === 'array') {
+                data.forEach((item, idx) => {
+                    childrenDiv.appendChild(createNode(item, null, data, true, idx));
+                });
+            } else {
+                Object.keys(data).forEach(k => {
+                    childrenDiv.appendChild(createNode(data[k], k, data));
+                });
+            }
+            nodeContainer.appendChild(childrenDiv);
+        }
+
+        return nodeContainer;
+    }
+
+    function resetEditor() { editorData = {}; renderEditor(); }
+    function syncToView() { renderEditor(); }
+
+    function loadJsonFile(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                editorData = JSON.parse(e.target.result);
+                renderEditor();
+            } catch (err) { alert('无效 JSON'); }
+            input.value = '';
+        };
+        reader.readAsText(file);
+    }
+    
+    function exportJsonFile() {
+        const jsonStr = JSON.stringify(editorData, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "data.json"; a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    async function copyEditorJson() {
+        try {
+            await navigator.clipboard.writeText(JSON.stringify(editorData, null, 2));
+            alert('JSON 已复制！');
+        } catch (err) {}
+    }
+
+    renderEditor();
+</script>
+</body>
+</html>
