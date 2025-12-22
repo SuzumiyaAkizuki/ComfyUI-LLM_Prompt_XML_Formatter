@@ -6,6 +6,16 @@
 
 使用LLM API自动生成适用于NewBie模型的XML风格提示词，并调整画面风格
 
+## 更新说明
+
+### 2025年12月22日更新
+ - 修改文件结构，所有节点的配置均统合在`LPF_config.json`中
+ - 发送原图不再暴露你的API KEY
+ - 增添`json`文件编辑小工具
+ - 修改了默认system prompt，节约tokens
+ - 增添了LLM输出清洗流程，增强程序鲁棒性
+
+
 ## 节点说明
 
 ComfyUI-LLM_Prompt_Xml_Formatter提供两个节点：
@@ -28,9 +38,11 @@ ComfyUI-LLM_Prompt_Xml_Formatter提供两个节点：
 
    **使用说明：** `system prompt.txt`为大模型使用的预设提示词，其中内置基本破限命令。以下是推荐的模型：
 
-   - 节约成本，支持R-18G提示，不支持少数R-18提示：`deepseek-chat`
-   - 效果最好，支持R-18提示：`gemini-3-flash`
-   - 支持大部分NSFW提示：`grok-4-fast`
+   | 模型名称                    | 平均每次使用成本/美元 | 备注         |
+   | --------------------------- | --------------------- | ------------ |
+   | `deepseek-chat`             | 0.00013               |              |
+   | `gemini-3-flash-preview`    | 0.00040               | SFW          |
+   | `grok-4-fast-non-reasoning` | 0.00010               | NSFW效果最好 |
 
    示例输入：
 
@@ -155,7 +167,7 @@ ComfyUI-LLM_Prompt_Xml_Formatter提供两个节点：
    
    最终生成的图片：
    
-   ![图片示例](https://akizukipic.oss-cn-beijing.aliyuncs.com/img/202512211656940.png)
+   ![图片示例](https://raw.githubusercontent.com/SuzumiyaAkizuki/image/main/ComfyUI_00221_.png)
    
    ## 依赖
    
@@ -163,9 +175,9 @@ ComfyUI-LLM_Prompt_Xml_Formatter提供两个节点：
    
    ## 参考工作流
    
-   即代码库中的`WorkFlowExample.json`，打开Comfy-UI，按<kbd>Ctrl</kbd>+<kbd>O</kbd>，选择此文件，即可加载示例工作流。
+   保存在上面的示例图片中。右键另存为，打开Comfy-UI，按<kbd>Ctrl</kbd>+<kbd>O</kbd>，选择此文件，即可加载示例工作流。
    
-   该工作流还使用了[ComfyUI-Custom-Scripts](https://github.com/pythongosssss/ComfyUI-Custom-Scripts)的节点，和[SADA加速器](https://github.com/liming123332/comfyui-sada-icml)的节点。这些节点都不必须，跳过后工作流仍然可以正常运行。
+   该工作流还使用了[ComfyUI-Custom-Scripts](https://github.com/pythongosssss/ComfyUI-Custom-Scripts)的节点。这些节点都不必须，跳过后工作流仍然可以正常运行。
    
    
    
@@ -179,11 +191,7 @@ ComfyUI-LLM_Prompt_Xml_Formatter提供两个节点：
 
    将该文件夹放置在`...\ComfyUI\custom_nodes\`目录下，重启Comfy-UI即可。
 
-  ## 成本与风险提示
 
-   每调用一次LLM Xml Prompt Formatter的成本约为$0.0012（使用`deepseek-chat`模型）。
-
-   使用此工作流生成的**图片原图中，会包含你的API key信息**，敬请留意。此问题将在下一版本中解决。
 
 
 
