@@ -28,7 +28,7 @@ Documentation = "https://github.com/SuzumiyaAkizuki/ComfyUI-LLM_Prompt_XML_Forma
 "Bug Tracker" = "https://github.com/SuzumiyaAkizuki/ComfyUI-LLM_Prompt_XML_Formatter/issues"
 
 [tool.comfy]
-PublisherId = ""
+PublisherId = "sakizuki"
 DisplayName = "ComfyUI-LLM_Prompt_XML_Formatter"
 Icon = ""
 includes = [] 
