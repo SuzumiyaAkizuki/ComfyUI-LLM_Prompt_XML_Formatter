@@ -8,7 +8,13 @@
 
 ## 更新说明
 
-### 2025年12月22日更新
+### 2025年12月24日更新1.0.5
+ - 修改提示词结构，现在提示词严格按照xml格式生成
+ - 将原先的正则表达式匹配法改为使用解析xml的方法进行数据清洗和标签注入，增强程序鲁棒性
+ - 增添依赖[lxml](https://github.com/lxml/lxml)
+ - 更新将在测试完成后推送
+
+### 2025年12月22日更新1.0.0
  - 修改文件结构，所有节点的配置均统合在`LPF_config.json`中
  - 发送原图不再暴露你的API KEY
  - 增添`json`文件编辑小工具
@@ -190,6 +196,7 @@ ComfyUI-LLM_Prompt_Xml_Formatter提供两个节点：
    ![压缩包](https://akizukipic.oss-cn-beijing.aliyuncs.com/img/202512211548632.png)
 
    将该文件夹放置在`...\ComfyUI\custom_nodes\`目录下，重启Comfy-UI即可。
+
 
 
 
