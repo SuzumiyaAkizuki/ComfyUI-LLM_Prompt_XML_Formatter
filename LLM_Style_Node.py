@@ -1,20 +1,21 @@
-import re
 import os
 import json
+import re
+from lxml import etree
+
 
 class BColors:
     WARNING = '\033[93m'
     FAIL = '\033[91m'
-    ENDC = '\033[0m' # Reset all attributes
+    ENDC = '\033[0m'
 
 
-
-# === 配置 ===
-# 这里定义默认样式，防止配置文件读取失败时报错
+# === 配置与默认值 ===
+# 预定义默认样式，确保加载失败时也有得选
 DEFAULT_STYLES = {
-    "Empty style": {
-        "artist": " ",
-        "style": " "
+    "空样式，请在下方文本框中自行书写": {
+        "artist": "",
+        "style": ""
     }
 }
 
@@ -23,24 +24,18 @@ CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), CONFIG_FI
 
 
 def load_styles_from_config():
-    """
-    辅助函数：读取 LPF_config.json 中的 'styles' 字段并将其与默认样式合并。
-    """
+    """读取配置文件并与默认样式合并"""
     styles = DEFAULT_STYLES.copy()
 
     if os.path.exists(CONFIG_PATH):
         try:
             with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-
-
                 user_styles = data.get("styles", {})
-
                 if isinstance(user_styles, dict) and user_styles:
                     styles.update(user_styles)
-
         except Exception as e:
-            print(f"{BColors.FAIL}[LLM_Prompt_Formatter]: Error loading {CONFIG_FILENAME}: {e} {BColors.ENDC}")
+            print(f"{BColors.FAIL}[XML_Style_Injector]: 加载配置文件出错: {e}{BColors.ENDC}")
 
     return styles
 
@@ -51,7 +46,7 @@ class LLM_Xml_Style_Injector:
 
     @classmethod
     def INPUT_TYPES(s):
-        # 重新加载
+        # 实时获取最新的 style 列表
         current_styles = load_styles_from_config()
         style_keys = list(current_styles.keys())
 
@@ -64,12 +59,12 @@ class LLM_Xml_Style_Injector:
                 "artist_add": ("STRING", {
                     "multiline": True,
                     "default": "",
-                    "placeholder": "Add extra artists here (comma separated). Will be added BEFORE the preset."
+                    "placeholder": "在此输入要添加的 Artist，将拼接到预设前面"
                 }),
                 "style_add": ("STRING", {
                     "multiline": True,
                     "default": "",
-                    "placeholder": "Add extra styles here (comma separated). Will be added BEFORE the preset."
+                    "placeholder": "在此输入要添加的 Style，将拼接到预设前面"
                 }),
             }
         }
@@ -80,59 +75,74 @@ class LLM_Xml_Style_Injector:
     CATEGORY = "LLM XML Helpers"
 
     def inject_style(self, xml_input, preset, artist_add, style_add):
+        # 1. 获取选中的预设内容
         current_styles = load_styles_from_config()
-
         selected_data = current_styles.get(preset, {"artist": "", "style": ""})
 
-        preset_artist = selected_data.get("artist", "")
-        preset_style = selected_data.get("style", "")
+        preset_artist = selected_data.get("artist", "").strip()
+        preset_style = selected_data.get("style", "").strip()
+
+        # 2. 定义拼接逻辑：[输入] + [预设]
+        def combine_tags(input_val, preset_val):
+            input_val = input_val.strip()
+            # 如果两边都有内容，用逗号隔开；否则返回不为空的那一边
+            if input_val and preset_val:
+                return f"{input_val}, {preset_val}"
+            return input_val if input_val else preset_val
+
+        target_artist = combine_tags(artist_add, preset_artist)
+        target_style = combine_tags(style_add, preset_style)
+
+        # 3. 提取 XML 块和 Header
+        # 使用非贪婪匹配获取 <img> 之后的内容
+        match = re.search(r'(<img>.*?</img>)', xml_input, re.DOTALL | re.IGNORECASE)
+
+        if not match:
+            print(f"{BColors.WARNING}[LLM_Prompt_Formatter]: 未发现 <img> 标签，跳过注入。{BColors.ENDC}")
+            return (xml_input,)
+
+        header_text = xml_input[:match.start()].strip()
+        xml_content = match.group(1)
+
+        try:
+            # 4. 使用 lxml 解析
+            parser = etree.XMLParser(recover=True, encoding='utf-8')
+            root = etree.fromstring(xml_content.encode('utf-8'), parser=parser)
+
+            # 5. 更新或创建标签的辅助函数
+            def upsert(parent, tag_name, text_value):
+                if text_value and text_value.strip():
+                    elements = parent.xpath(f"//{tag_name}")
+                    if elements:
+                        for el in elements:
+                            el.text = text_value
+                    else:
+                        # 尝试找 general_tags 容器插入
+                        print(f"{BColors.WARNING}[LLM_Prompt_Formatter]: 未找到<{tag_name}>标签，正在尝试注入<general_tags>{BColors.ENDC}")
+                        gen_containers = parent.xpath("//general_tags")
+                        if gen_containers:
+                            new_node = etree.SubElement(gen_containers[0], tag_name)
+                            new_node.text = text_value
+                        else:
+                            # 实在没地方插了就插在根节点最后
+                            print(f"{BColors.WARNING}[LLM_Prompt_Formatter]: 未找到<general_tags>标签{BColors.ENDC}")
+                            new_node = etree.SubElement(parent, tag_name)
+                            new_node.text = text_value
+                else:
+                    print(f"{BColors.WARNING}[LLM_Prompt_Formatter]: 用户未输入<{tag_name}>，不改变标签{BColors.ENDC}")
+                    pass
 
 
-        # 处理 Artist
-        parts_artist = [artist_add.strip(), preset_artist]
-        target_artist = ", ".join([p for p in parts_artist if p])  # 过滤空值并合并
+            upsert(root, "artist", target_artist)
+            upsert(root, "style", target_style)
 
-        # 处理 Style
-        parts_style = [style_add.strip(), preset_style]
-        target_style = ", ".join([p for p in parts_style if p])
+            # 6. 生成最终字符串
+            modified_xml = etree.tostring(root, encoding='unicode', method='xml', pretty_print=True)
 
-        output_text = xml_input
+            # 如果 Header 为空，只返回 XML；否则拼接
+            final_output = f"{header_text}\n{modified_xml}" if header_text else modified_xml
+            return (final_output,)
 
-        def upsert_tag(text, tag_name, content, insert_after_tag=None):
-            """
-            text: 完整的 XML 文本
-            tag_name: 比如 "artist" 或 "style"
-            content: 要填入的内容
-            insert_after_tag: 锚点标签
-            """
-            if not content:
-                return text
-
-            tag_pattern = f"(<{tag_name}>)(.*?)(</{tag_name}>)"
-
-            # 签已经存在 -> 替换内容
-            if re.search(tag_pattern, text, re.DOTALL | re.IGNORECASE):
-                # \1 是 <tag>, \3 是 </tag>，这里直接替换中间内容
-                return re.sub(tag_pattern, f"\\1{content}\\3", text, flags=re.DOTALL | re.IGNORECASE)
-
-            # 标签不存在 -> 插入
-            else:
-                new_block = f"<{tag_name}>{content}</{tag_name}>"
-
-                if insert_after_tag:
-                    target_pattern = f"(</{insert_after_tag}>)"
-                    if re.search(target_pattern, text, re.IGNORECASE):
-                        print(f"[LLM_Prompt_Formatter]: Auto-inserting <{tag_name}> after <{insert_after_tag}>")
-                        return re.sub(target_pattern, f"\\1\n{new_block}", text, flags=re.IGNORECASE, count=1)
-
-                # 没找到锚点 -> 追加到末尾
-                print(f"{BColors.WARNING}[LLM_Prompt_Formatter]: Missing tag <{tag_name}>, appending to end.{BColors.ENDC}")
-                return text + "\n" + new_block
-
-        # 执行注入
-        output_text = upsert_tag(output_text, "style", target_style)
-
-        output_text = upsert_tag(output_text, "artist", target_artist, insert_after_tag="style")
-
-
-        return (output_text,)
+        except Exception as e:
+            print(f"{BColors.FAIL}[LLM_Prompt_Formatter]: XML 解析失败: {e}{BColors.ENDC}")
+            return (xml_input,)
