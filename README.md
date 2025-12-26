@@ -239,17 +239,31 @@ ComfyUI-LLM_Prompt_Xml_Formatter提供两个节点：
    
    
    
-   ## 安装方法
-   
-   点击本页面中绿色按钮`<>Code`，点击Download ZIP，将会下载一个压缩包。
-   
+  ## 安装和使用方法
+
+点击Github页面中绿色按钮`<>Code`，点击Download ZIP，将会下载一个压缩包。
+
    ![下载按钮](https://akizukipic.oss-cn-beijing.aliyuncs.com/img/202512211546384.png)
 
    ![压缩包](https://akizukipic.oss-cn-beijing.aliyuncs.com/img/202512211548632.png)
 
-   将该文件夹放置在`...\ComfyUI\custom_nodes\`目录下，重启Comfy-UI即可。
+将该文件夹放置在`...\ComfyUI\custom_nodes\`目录下
 
+![image-20251226145335813](https://akizukipic.oss-cn-beijing.aliyuncs.com/img/202512261453308.png)
 
+进入文件夹，找到`LPF_config.json.example`文件，右键重命名，删掉`.example`后缀
+
+![重命名前](https://akizukipic.oss-cn-beijing.aliyuncs.com/img/202512261454909.png)
+
+删完就像这样
+
+![image-20251226145521692](https://akizukipic.oss-cn-beijing.aliyuncs.com/img/202512261455772.png)
+
+使用记事本或文件编辑器打开此文件，在对应的字段中填写你的api_key
+
+![填写前后对比](https://akizukipic.oss-cn-beijing.aliyuncs.com/img/202512261457930.png)
+
+重启Comfy-UI，即可使用。
 
 
 
