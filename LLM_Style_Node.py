@@ -11,8 +11,7 @@ class BColors:
     ENDC = '\033[0m'
 
 
-# === 配置与默认值 ===
-# 预定义默认样式，确保加载失败时也有得选
+# 预定义默认样式
 DEFAULT_STYLES = {
     "空样式，请在下方文本框中自行书写": {
         "artist": "",
@@ -47,7 +46,7 @@ class LLM_Xml_Style_Injector:
 
     @classmethod
     def INPUT_TYPES(s):
-        # 实时获取最新的 style 列表
+        # 获取最新的 style 表
         current_styles = load_styles_from_config()
         style_keys = list(current_styles.keys())
 
@@ -73,20 +72,18 @@ class LLM_Xml_Style_Injector:
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("xml_output",)
     FUNCTION = "inject_style"
-    CATEGORY = "LLM XML Helpers"
+    CATEGORY = "NewBie LLM Formatter"
 
     def inject_style(self, xml_input, preset, artist_add, style_add):
-        # 1. 获取选中的预设内容
         current_styles = load_styles_from_config()
         selected_data = current_styles.get(preset, {"artist": "", "style": ""})
 
         preset_artist = selected_data.get("artist", "").strip()
         preset_style = selected_data.get("style", "").strip()
 
-        # 2. 定义拼接逻辑：[输入] + [预设]
+        # 拼接
         def combine_tags(input_val, preset_val):
             input_val = input_val.strip()
-            # 如果两边都有内容，用逗号隔开；否则返回不为空的那一边
             if input_val and preset_val:
                 return f"{input_val}, {preset_val}"
             return input_val if input_val else preset_val
@@ -94,8 +91,7 @@ class LLM_Xml_Style_Injector:
         target_artist = combine_tags(artist_add, preset_artist)
         target_style = combine_tags(style_add, preset_style)
 
-        # 3. 提取 XML 块和 Header
-        # 使用非贪婪匹配获取 <img> 之后的内容
+        # 提取 XML
         match = re.search(r'(<img>.*?</img>)', xml_input, re.DOTALL | re.IGNORECASE)
 
         if not match:
@@ -106,11 +102,11 @@ class LLM_Xml_Style_Injector:
         xml_content = match.group(1)
 
         try:
-            # 4. 使用 lxml 解析
+            # 解析
             parser = etree.XMLParser(recover=True, encoding='utf-8')
             root = etree.fromstring(xml_content.encode('utf-8'), parser=parser)
 
-            # 5. 更新或创建标签的辅助函数
+            # 更新或创建标签
             def upsert(parent, tag_name, text_value):
                 if text_value and text_value.strip():
                     elements = parent.xpath(f"//{tag_name}")
@@ -137,10 +133,9 @@ class LLM_Xml_Style_Injector:
             upsert(root, "artist", target_artist)
             upsert(root, "style", target_style)
 
-            # 6. 生成最终字符串
             modified_xml = etree.tostring(root, encoding='unicode', method='xml', pretty_print=True)
             modified_xml = repair_xml_custom(modified_xml)
-            # 如果 Header 为空，只返回 XML；否则拼接
+
             final_output = f"{header_text}\n{modified_xml}" if header_text else modified_xml
             return (final_output,)
 
@@ -157,26 +152,22 @@ def repair_xml_custom(xml_string):
     if not xml_string.strip():
         return xml_string
 
-    # 1. 准备解析器
-    # remove_blank_text 帮助我们在对比时减少空白符干扰
+    # 解析器
     strict_parser = etree.XMLParser(remove_blank_text=True)
     recover_parser = etree.XMLParser(recover=True, remove_blank_text=True)
 
     try:
-        # 尝试严格解析
+        # 严格解析
         etree.fromstring(xml_string.encode('utf-8'), parser=strict_parser)
         print("[LLM_Prompt_Formatter]:已完成xml格式检查，无错误。")
         return xml_string
     except etree.XMLSyntaxError:
         try:
-            # 2. 触发修复逻辑
+            # 修复
             root = etree.fromstring(xml_string.encode('utf-8'), parser=recover_parser)
             if root is None:
                 raise ValueError("无法解析出任何有效结构")
 
-            # 3. 生成修复后的字符串
-            # xml_declaration=False 剔除 <?xml ... ?>
-            # encoding='unicode' 返回 str 类型而非 bytes
             repaired_xml = etree.tostring(
                 root,
                 encoding='unicode',
@@ -184,7 +175,7 @@ def repair_xml_custom(xml_string):
                 xml_declaration=False
             ).strip()
 
-            # 4. 打印修复对比
+            # 修复对比
             print(f"{BColors.WARNING}[LLM_Prompt_Formatter]:检测到xml格式错误，已自动修复。差异如下：{BColors.ENDC}")
             diff = difflib.unified_diff(
                 xml_string.splitlines(),
@@ -194,7 +185,6 @@ def repair_xml_custom(xml_string):
                 lineterm=''
             )
 
-            # 过滤掉 diff 头部信息，只看改动
             has_diff = False
             for line in diff:
                 if line.startswith(('+', '-')) and not line.startswith(('+++', '---')):

@@ -1,12 +1,12 @@
-# ComfyUI-LLM_Prompt_Xml_Formatter
+# ComfyUI-NewBie-LLM-Formatter
 
 [![ComfyUI](https://img.shields.io/badge/ComfyUI-Compatible-green.svg)](https://comfy.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![NewBie](https://img.shields.io/badge/NewBie-Compatible-green.svg)](https://huggingface.co/NewBie-AI/NewBie-image-Exp0.1)
+[![NewBie](https://img.shields.io/badge/NewBie-Compatible-yellow.svg)](https://huggingface.co/NewBie-AI/NewBie-image-Exp0.1)
 
 使用LLM API自动生成适用于NewBie模型的XML风格提示词，并调整画面风格
 
-Comfy Registry地址：https://registry.comfy.org/zh/nodes/llm_prompt_xml_formatter
+
 
 ## 更新说明
 

@@ -64,7 +64,7 @@ class LLM_Prompt_Formatter:
     RETURN_NAMES = ("xml_out", "text_out")
     OUTPUT_NODE = True
     FUNCTION = "process_text"
-    CATEGORY = "LLM XML Helpers"
+    CATEGORY = "NewBie LLM Formatter"
 
     def tensor_to_base64(self, image_tensor):
         """将 ComfyUI 的张量图片转换为 Base64 编码"""
@@ -73,23 +73,20 @@ class LLM_Prompt_Formatter:
         img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
 
         buffered = io.BytesIO()
-        # 使用 JPEG 压缩以节省 Token
         img.save(buffered, format="JPEG", quality=85)
         return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
     def process_text(self, api_key, api_url, model_name, user_text,image=None):
-        # 1. 加载配置（优先从 JSON 取，UI 次之）
+        # 加载配置（优先从 JSON 取，UI 次之）
         config = load_api_config()
         final_key = config.get("api_key") if config.get("api_key") else api_key
         final_url = config.get("api_url") if config.get("api_url") else api_url
 
-        # 2. 从 JSON 获取 System Prompt
-        # 如果 JSON 里没写这个字段，就给它一个默认的，防止代码崩掉
         system_content = config.get("system_prompt", "You are a helpful assistant that provides prompt tags.")
         gemma_prompt = config.get("gemma_prompt", "You are an assistant designed to generate high-quality anime images with the highest degree of image-text alignment based on xml format textual prompts. <Prompt Start>\n");
 
 
-        # 3. 初始化并调用 OpenAI
+        # 调用 OpenAI
         try:
             if not final_key or final_key == "sk-...":
                 print(f"{BColors.FAIL}[LLM_Prompt_Formatter]: API KEY 缺失！请在 LPF_config.json 中配置。{BColors.ENDC}")
@@ -155,16 +152,15 @@ def clean_prompt(xml_content,gemma_prompt):
     添加gemma_prompt
     """
 
-    # 预定义的gemma system prompt
     header = gemma_prompt
-    # 使用正则匹配最外层的 { ... }
+
     match = re.search(r'(<img>.*?</img>)', xml_content, re.DOTALL | re.IGNORECASE)
 
     if not match:
         print(f"{BColors.WARNING}[LLM_Prompt_Formatter]: LLM返回结果匹配失败，请检查输出结果，必要时停止工作流。{BColors.ENDC}")
         return xml_content
 
-    # 获取大括号及其内部的内容
+    # xml内部的内容
     xml_part = match.group(1)
     xml_part=repair_xml_custom(xml_part)
 
@@ -181,26 +177,22 @@ def repair_xml_custom(xml_string):
     if not xml_string.strip():
         return xml_string
 
-    # 1. 准备解析器
-    # remove_blank_text 帮助我们在对比时减少空白符干扰
+    # 解析器
     strict_parser = etree.XMLParser(remove_blank_text=True)
     recover_parser = etree.XMLParser(recover=True, remove_blank_text=True)
 
     try:
-        # 尝试严格解析
+        # 严格解析
         etree.fromstring(xml_string.encode('utf-8'), parser=strict_parser)
         print("[LLM_Prompt_Formatter]:已完成xml格式检查，无错误。")
         return xml_string
     except etree.XMLSyntaxError:
         try:
-            # 2. 触发修复逻辑
+            # 修复
             root = etree.fromstring(xml_string.encode('utf-8'), parser=recover_parser)
             if root is None:
                 raise ValueError("无法解析出任何有效结构")
 
-            # 3. 生成修复后的字符串
-            # xml_declaration=False 剔除 <?xml ... ?>
-            # encoding='unicode' 返回 str 类型而非 bytes
             repaired_xml = etree.tostring(
                 root,
                 encoding='unicode',
@@ -208,7 +200,7 @@ def repair_xml_custom(xml_string):
                 xml_declaration=False
             ).strip()
 
-            # 4. 打印修复对比
+            # 修复对比
             print(f"{BColors.WARNING}[LLM_Prompt_Formatter]:检测到xml格式错误，已自动修复。差异如下：{BColors.ENDC}")
             diff = difflib.unified_diff(
                 xml_string.splitlines(),
@@ -218,7 +210,6 @@ def repair_xml_custom(xml_string):
                 lineterm=''
             )
 
-            # 过滤掉 diff 头部信息，只看改动
             has_diff = False
             for line in diff:
                 if line.startswith(('+', '-')) and not line.startswith(('+++', '---')):
