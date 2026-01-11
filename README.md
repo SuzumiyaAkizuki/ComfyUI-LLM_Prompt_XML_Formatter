@@ -6,11 +6,10 @@
 
 使用LLM API自动生成适用于NewBie模型的XML风格提示词，并调整画面风格
 
-<details>
-<summary> **更新说明** </summary>
-
 ## 更新说明
 
+<details>
+<summary> 更新说明 </summary>
 ### 2026年01月08日更新1.1.6
 
 - Style Preset Saver增加一个输出流，可以预览将要保存的风格提示词组
@@ -63,7 +62,7 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
 
    **输入参数：** 一个可选图片输入流，四个文本输入框，一个按钮，分别是：
 
-   - `image`：可选，将输入的图片传输给LLM
+   - `image`：可选，将输入的图片传输给LLM。请注意，这只是让LLM反推提示词，不是传统意义上的图生图。
 
    - `api_key`：Open AI格式大模型`api_key`
 
@@ -99,6 +98,10 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
    > 强烈建议在使用时关闭思考模式，这会大大降低耗时、减小 token 消耗（关闭思考模式一次使用大约消耗 3000-4000 tokens ，开启思考模式可能会消耗 5000 甚至 10000 tokens）。此外，关闭思考模式有可能还会提升NSFW效果。
 
    在[Deepseek开放平台](https://platform.deepseek.com)上，每位用户可以获赠10元的免费额度，大约可以使用1000次。
+
+<details>
+<summary> 节点示例输入输出 </summary>
+
 
    **纯文本示例输入：**
 
@@ -205,6 +208,9 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
 
    ![](https://akizukipic.oss-cn-beijing.aliyuncs.com/img/202512252157926.png)
 
+</details>
+
+
 2. Xml Style Injecto
 
    **功能：** 替换`xml`格式提示词中的风格信息
@@ -221,6 +227,9 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
    - `xml_output`：处理后的`xml`格式提示词
 
    **使用说明：** `LPF_config.json` 中的 `style` 字段为为预设风格提示词集合，你可以通过修改这个文件来添加风格提示词串。
+
+<details>
+<summary> 节点示例输入输出 </summary>
 
    示例输入：选择`飘渺杰作光影集`，增加`artist`：`daito,kataokasan`
 
@@ -268,6 +277,9 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
    **最终生成的图片：**
 
    ![图片示例](https://raw.githubusercontent.com/SuzumiyaAkizuki/image/main/ComfyUI_00221_.png)
+   
+</details>
+
 
 3. Style Preset Saver
 

@@ -170,6 +170,13 @@ class LLM_Prompt_Formatter:
                 think=1
                 print(f"{BColors.WARNING}[LLM_Prompt_Formatter]:大模型已进行深度思考，以下是思考内容：\n {reasoning} {BColors.ENDC}")
 
+            match = re.search(r'<think>(.*?)</think>', full_response, re.DOTALL)
+            if match:
+                thinking=1
+                print(f"{BColors.WARNING}[LLM_Prompt_Formatter]:大模型已进行深度思考，以下是思考内容：\n {match.group(1)} {BColors.ENDC}")
+                full_response = re.sub(r'<think>(.*?)</think>', "", full_response, flags=re.DOTALL)
+                full_response = full_response.strip()
+
             if thinking and not think:
                 print(
                     f"{BColors.WARNING}[LLM_Prompt_Formatter]:虽然您开启了思考开关，但是未解析到思考内容。{BColors.ENDC}")
