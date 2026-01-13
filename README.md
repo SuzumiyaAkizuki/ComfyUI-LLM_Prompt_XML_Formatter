@@ -4,7 +4,11 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![NewBie](https://img.shields.io/badge/NewBie-Compatible-yellow.svg)](https://huggingface.co/NewBie-AI/NewBie-image-Exp0.1)
 
-使用LLM API自动生成适用于NewBie模型的XML风格提示词，并调整画面风格
+利用大语言模型 API 将自然语言或图片自动转化为适用于 NewBie 模型的结构化 XML 提示词。通过提供高度健壮的提示词生成与画面风格管理节点，显著提升了图像生成流程的效率与效果。
+
+项目Github地址：https://github.com/SuzumiyaAkizuki/ComfyUI-NewBie-LLM-Formatter
+
+项目ComfyUI Registry地址：https://registry.comfy.org/zh/nodes/NewBie-LLM-Formatter
 
 ## 更新说明
 
@@ -73,6 +77,8 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
 
    **功能：** 将用户输入的自然语言或标签集格式化为`xml`格式，供NewBie模型使用。
 
+   ![image-20260113122948204](https://akizukipic.oss-cn-beijing.aliyuncs.com/img/202601131230416.png)
+
    **输入参数：** 一个可选图片输入流，四个文本输入框，一个按钮，分别是：
 
    - `image`：可选，将输入的图片传输给LLM。请注意，这只是让LLM反推提示词，不是传统意义上的图生图。
@@ -84,7 +90,7 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
    - `model_name`：模型名称
 
    - `thinking`：深度思考模式。显示`true`时，模型将进行深度思考，思考过程将在控制台显示。显示`false`时，模型不进行深度思考。推荐将其设置为`false`。
-
+   
      > 目前，仅适配了OpenRouter平台、deepseek平台和Gemini平台。部分平台不支持设置此字段，请用模型名称控制。
      >
      > 例如，可以使用`deepseek-chat`来使用无思考的deepseek，使用`deepseek-reasoner`来使用有思考的deepseek。
@@ -92,12 +98,12 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
    - 待转换文本
 
    **输出参数：** 2个文本格式输出流
-
+   
    - `xml_out`：`xml`格式提示词
    - `text_out`：大模型输出的额外解释信息
 
    **使用说明：** 使用前，请先在`LPF_config.json`中填写API key、API url和模型名称。`LPF_config.json` 中的 `system_prompt` 字段为大模型使用的预设提示词，其中内置基本破限命令。以下是推荐的模型：
-
+   
    | 模型名称                    | 平均每次使用成本/美元 | NSFW效果 | 输出质量 | 备注 |
    | --------------------------- | --------------------- | ------------ | --------------------------- | --------------------------- |
    | `deepseek/deepseek-v3.2` | 0.0008              | 均衡 | 均衡 | 均衡 |
@@ -105,11 +111,11 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
    | `x-ai/grok-4.1-fast` | 0.0007              | 最好 | 较好 | NewBie训练打标使用了此模型 |
    | `xiaomi/mimo-v2-flash:free` | 0（免费） | 较好 | 一般 |  |
    | `cognitivecomputations/dolphin-mistral-24b-venice-edition:free` | 0（免费） | 官方宣称无审查 | 较差 |  |
-
+   
    > 计价参考平台为[OpenRouter](https://openrouter.ai/)，所有模型均关闭思考模式，评测为个人使用体感，仅供参考。
    >
    > *开发者笔记：强烈建议在使用时关闭思考模式，这会大大降低耗时、减小 token 消耗（关闭思考模式一次使用大约消耗 3000-4000 tokens ，开启思考模式可能会消耗 5000 甚至 10000 tokens）。此外，关闭思考模式有可能还会提升NSFW效果。*
-
+   
    在[Deepseek开放平台](https://platform.deepseek.com)上，每位用户可以获赠10元的免费额度，大约可以使用1000次。
 
 <details>
@@ -228,8 +234,10 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
 
    **功能：** 替换`xml`格式提示词中的风格信息
 
-   **输入参数：** 1个文本格式输入流，1个下拉选项框，2个文本输入框
+   ![image-20260113123426220](https://akizukipic.oss-cn-beijing.aliyuncs.com/img/202601131234704.png)
 
+   **输入参数：** 1个文本格式输入流，1个下拉选项框，2个文本输入框
+   
    - `xml_input`：待处理的`xml`格式文本
    - `preset`：下拉选项框，可以在此处选择预设风格提示词集合
    - `artist`：文本输入框，将输入的画师信息添加在预设风格提示词集合的前方
@@ -238,7 +246,7 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
    **输出参数：** 1个文本格式输出流
 
    - `xml_output`：处理后的`xml`格式提示词
-
+   
    **使用说明：** `LPF_config.json` 中的 `style` 字段为为预设风格提示词集合，你可以通过修改这个文件来添加风格提示词串。
 
 <details>
@@ -298,8 +306,10 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
 
    **功能**：将目前使用的风格提示词组保存在配置文件`LPF_config.json`中。
 
-   **输入参数**：1个文本格式输入流，1个单行文本框，1个按钮
+   ![image-20260113123613316](https://akizukipic.oss-cn-beijing.aliyuncs.com/img/202601131236975.png)
 
+   **输入参数**：1个文本格式输入流，1个单行文本框，1个按钮
+   
    - `text_input`：文本格式输入流，输入目前使用的提示词，节点将自动解析其中的`<artist>`和`<style>`字段。
    - `preset_name`：单行文本框，保存预设的名称。如果遇到重名或空名称，节点将放弃保存。
    - `save_tigger`：按钮，只有显示`Save as Styles`时，才会进行保存。
@@ -307,7 +317,7 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
    **输出参数**：1个文本格式输出流
 
    - `extracted_tags`：预览将要保存的风格提示词组列表
-
+   
    
 
 ## 依赖
@@ -318,10 +328,18 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
 
 保存在项目的`NewBie_LLM_Formatter_example.json`中。右键另存为，打开Comfy-UI，按<kbd>Ctrl</kbd>+<kbd>O</kbd>，选择此文件，即可加载示例工作流。
 
-此工作流是一个完整、成熟的工作流，里面有其他的节点，但是我写了详细的注释。
+此工作流是一个完整、成熟的工作流，里面有其他的节点，但有详细的注释。
 
 
 ## 安装和使用方法
+
+### 命令行安装
+
+```
+comfy node install NewBie-LLM-Formatter
+```
+
+### 手动安装
 
 点击Github页面中绿色按钮`<>Code`，点击Download ZIP，将会下载一个压缩包。
 
