@@ -12,7 +12,7 @@
 
 ## 更新说明
 
-<details>
+<details open>
 <summary> 更新说明 </summary>
 
 ### 2026年01月12日更新1.1.7
@@ -109,7 +109,7 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
    | `deepseek/deepseek-v3.2` | 0.0008              | 均衡 | 均衡 | 均衡 |
    | `google/gemini-3-flash-preview` | 0.0035              | 较好，部分情况(G向)仍需技巧，可能需要多试几次 | 最好 | NewBie训练打标使用了此模型 |
    | `x-ai/grok-4.1-fast` | 0.0007              | 最好 | 较好 | NewBie训练打标使用了此模型 |
-   | `xiaomi/mimo-v2-flash:free` | 0（免费） | 较好 | 一般 |  |
+   | `xiaomi/mimo-v2-flash` | 0.0004 | 较好 | 一般 |  |
    | `cognitivecomputations/dolphin-mistral-24b-venice-edition:free` | 0（免费） | 官方宣称无审查 | 较差 |  |
    
    > 计价参考平台为[OpenRouter](https://openrouter.ai/)，所有模型均关闭思考模式，评测为个人使用体感，仅供参考。
@@ -118,7 +118,7 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
    
    在[Deepseek开放平台](https://platform.deepseek.com)上，每位用户可以获赠10元的免费额度，大约可以使用1000次。
 
-<details>
+<details  open>
 <summary> 节点示例输入输出 </summary>
 
 
@@ -249,7 +249,7 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
    
    **使用说明：** `LPF_config.json` 中的 `style` 字段为为预设风格提示词集合，你可以通过修改这个文件来添加风格提示词串。
 
-<details>
+<details open>
 <summary> 节点示例输入输出 </summary>
 
    示例输入：选择`飘渺杰作光影集`，增加`artist`：`daito,kataokasan`
@@ -365,7 +365,9 @@ comfy node install NewBie-LLM-Formatter
 
 重启Comfy-UI，即可使用。
 
+## 其他
 
+NewBie模型官方用户群：1019424838 
 
 
 
