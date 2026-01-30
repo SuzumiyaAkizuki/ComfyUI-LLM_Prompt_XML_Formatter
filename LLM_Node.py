@@ -101,6 +101,8 @@ class LLM_Prompt_Formatter:
             final_key = api_key
             final_url = api_url
 
+        final_url = final_url.replace(" ", "")
+
         system_content = config.get("system_prompt", "You are a helpful assistant that provides prompt tags.")
         jailbreaker = config.get("gemini_jailbreaker","")
         gemma_prompt = config.get("gemma_prompt", "You are an assistant designed to generate high-quality anime images with the highest degree of image-text alignment based on xml format textual prompts. <Prompt Start>\n")
@@ -111,6 +113,8 @@ class LLM_Prompt_Formatter:
             apiPlatform = 'deepseek'
         elif 'googleapis' in final_url:
             apiPlatform = 'googleapis'
+        elif "xiaomimimo" in final_url:
+            apiPlatform = 'xiaomi'
         else:
             apiPlatform = 'other'
             print(f"{BColors.WARNING}[LLM_Prompt_Formatter]: 思考模式开关暂不支持您使用的API平台。{BColors.ENDC}")
@@ -164,12 +168,10 @@ class LLM_Prompt_Formatter:
                     extra_body = {}
             elif apiPlatform == 'googleapis':
                 if thinking:
-                    extra_body = {
-
-                    }
+                    extra_body = {}
                 else:
                     if '3' in model_name or '2.5-pro' in model_name:
-                        print(f"{BColors.WARNING}[LLM_Prompt_Formatter]: googleapis平台的{model_name}模型无法彻底关闭思考功能。已将思考模式设置为low.{BColors.ENDC}")
+                        print(f"{BColors.WARNING}[LLM_Prompt_Formatter]: googleapis平台的{model_name}模型无法彻底关闭思考功能。已将思考模式设置为low。{BColors.ENDC}")
                         extra_body = {
                             "reasoning_effort": "low"
                         }
@@ -177,6 +179,15 @@ class LLM_Prompt_Formatter:
                         extra_body = {
                             "reasoning_effort":"none"
                         }
+            elif apiPlatform == 'xiaomi':
+                if thinking:
+                    extra_body = {
+                        "thinking": {"type": "enabled"}
+                    }
+                else:
+                    extra_body = {
+                        "thinking": {"type": "disabled"}
+                    }
             else:
                 extra_body={}
 
@@ -194,7 +205,7 @@ class LLM_Prompt_Formatter:
             prompt_tokens = usage.prompt_tokens
             completion_tokens = usage.completion_tokens
             total_tokens = usage.total_tokens
-            token_info = f"Tokens: {prompt_tokens} + {completion_tokens} = {total_tokens}"
+            token_info = f"Tokens: {prompt_tokens} tokens input + {completion_tokens} tokens output = {total_tokens} tokens used."
             print(f"[LLM_Prompt_Formatter]: {token_info}")
 
             full_response = response.choices[0].message.content

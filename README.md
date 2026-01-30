@@ -15,6 +15,12 @@
 <details open>
 <summary> 更新说明 </summary>
 
+### 2026年01月30日更新1.1.8
+
+- 更新思考模式选项对小米MIMO平台的支持
+- 优化示例配置文件
+- 更新了预设风格
+
 ### 2026年01月12日更新1.1.7
 
  - 极大提升 **「非Gemini官方平台」** Gemini模型的NSFW能力，可以完成一般的NSFW书写。如果仍然不能破甲（多见于G向），可以尝试在敏感提示词中间加入字符以破坏token，例如`blood -> blo···od`。
@@ -91,7 +97,7 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
 
    - `thinking`：深度思考模式。显示`true`时，模型将进行深度思考，思考过程将在控制台显示。显示`false`时，模型不进行深度思考。推荐将其设置为`false`。
    
-     > 目前，仅适配了OpenRouter平台、deepseek平台和Gemini平台。部分平台不支持设置此字段，请用模型名称控制。
+     > 目前，仅适配了OpenRouter平台、deepseek平台、Xiaomi MIMO平台和Gemini平台。部分平台不支持设置此字段，请用模型名称控制。
      >
      > 例如，可以使用`deepseek-chat`来使用无思考的deepseek，使用`deepseek-reasoner`来使用有思考的deepseek。
 
@@ -114,7 +120,9 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
    
    > 计价参考平台为[OpenRouter](https://openrouter.ai/)，所有模型均关闭思考模式，评测为个人使用体感，仅供参考。
    >
-   > *开发者笔记：强烈建议在使用时关闭思考模式，这会大大降低耗时、减小 token 消耗（关闭思考模式一次使用大约消耗 3000-4000 tokens ，开启思考模式可能会消耗 5000 甚至 10000 tokens）。此外，关闭思考模式有可能还会提升NSFW效果。*
+   > *开发者笔记1：强烈建议在使用时关闭思考模式，这会大大降低耗时、减小 token 消耗（关闭思考模式一次使用大约消耗 3000-4000 tokens ，开启思考模式可能会消耗 5000 甚至 10000 tokens）。此外，关闭思考模式有可能还会提升NSFW效果。*
+   >
+   > *开发者笔记2：我不建议你使用不高于4B的模型。因为，NewBie本身就自带一个Gemma3 4B模型。如果使用不高于4B的模型，为什么不选择相信NewBie自带的Gemma3 4B的理解能力呢？这样，还没有中间商赚差价。*
    
    在[Deepseek开放平台](https://platform.deepseek.com)上，每位用户可以获赠10元的免费额度，大约可以使用1000次。
 
