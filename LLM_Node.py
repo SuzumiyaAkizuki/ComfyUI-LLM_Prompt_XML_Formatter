@@ -42,19 +42,30 @@ class LLM_Prompt_Formatter:
         default_api_key = "sk-..."
         default_api_url = "https://xxx.ai/api/v1"
         default_user_text="1girl, holding a sword"
-        if model_list and isinstance(model_list, list) \
-                and api_key and isinstance(api_key, str) and (not api_key == default_api_key)\
-                and api_url and isinstance(api_url, str) and (not api_url == default_api_url):
+
+        AllReadSuccess=True
+        if model_list and isinstance(model_list, list) and (not all("your_model" in model for model in model_list)):
             model_widget = (model_list,)
+        else:
+            model_widget = ("STRING", {"multiline": False, "default": "读取模型列表失败，请在此填写模型名称"})
+            AllReadSuccess=False
+
+        if api_key and isinstance(api_key, str) and (not api_key == default_api_key):
             key_default = "已从配置文件中读取api key，在此填写将不生效"
+        else:
+            key_default = "读取API失败，请在此填写api key"
+            AllReadSuccess=False
+
+        if api_url and isinstance(api_url, str) and (not api_url == default_api_url):
             url_default = "已从配置文件中读取api url，在此填写将不生效"
         else:
-            model_widget = ("STRING", {"multiline": False, "default": "deepseek-chat"})
-            key_default = "读取API失败，请在此填写api key"
             url_default = "读取API失败，请在此填写api url"
-            default_user_text = "1girl, holding a sword\n[警告]：读取API失败，请检查配置文件。你可以在节点输入相关信息。请注意，你的API会在原图中保存，分享原图会导致API泄露。强烈建议使用配置文件，完成配置后按F5刷新页面并重新创建此节点。"
-            print(f"{BColors.WARNING}[LLM_Prompt_Formatter]: 读取API失败，请检查配置文件。你可以在节点输入相关信息。请注意，你的API会在原图中保存，分享原图会导致API泄露。强烈建议使用配置文件，完成配置后按F5刷新页面并重新创建此节点。{BColors.ENDC}")
+            AllReadSuccess=False
 
+        if not AllReadSuccess:
+            default_user_text = "1girl, holding a sword\n[警告]：读取API失败，请检查配置文件。你可以在节点输入相关信息。请注意，你的API会在原图中保存，分享原图可能会导致API泄露。强烈建议使用配置文件，完成配置后按F5刷新页面并重新创建此节点。"
+            print(
+                f"{BColors.WARNING}[LLM_Prompt_Formatter]: 读取API失败，请检查配置文件。你可以在节点输入相关信息。请注意，你的API会在原图中保存，分享原图可能会导致API泄露。强烈建议使用配置文件，完成配置后按F5刷新页面并重新创建此节点。{BColors.ENDC}")
 
         return {
             "required": {
@@ -224,11 +235,6 @@ class LLM_Prompt_Formatter:
                     f"{BColors.WARNING}[LLM_Prompt_Formatter]:虽然您开启了思考开关，但是未解析到思考内容。{BColors.ENDC}")
 
             # # XML 匹配
-            # xml_pattern = r"```xml\s*(.*?)\s*```"
-            # match = re.search(xml_pattern, full_response, re.DOTALL)
-            # if not match: # XML 匹配失败，试图匹配纯代码块
-            #     code_pattern = r"```\s*(.*?)\s*```"
-            #     match = re.search(code_pattern, full_response, re.DOTALL)
             match = re.search(r"```(?:xml)?\s*(.*?)\s*```", full_response, re.DOTALL)
 
             if match:
@@ -239,15 +245,20 @@ class LLM_Prompt_Formatter:
                 print(f"{BColors.WARNING}[LLM_Prompt_Formatter]: 解析代码块失败，正在尝试进一步分离{BColors.ENDC}")
 
                 # 如果没有代码块，检查是否有明显的 XML 标签结构
-                if "<img>" in full_response and "</img>" in full_response:
+                if "<img>" in full_response and "</img>" in full_response: #有完整结构
                     start = full_response.find("<img>")
                     end = full_response.rfind("</img>") + 6
                     xml_content = full_response[start:end]
                     text_content = full_response[:start] + full_response[end:]
-                else:
+                elif "<img>" in full_response: #有一半结构
+                    start = full_response.find("<img>")
+                    xml_content = full_response[start:]
+                    text_content = ""
+                    print(f"{BColors.WARNING}[LLM_Prompt_Formatter]: 大模型的回复可能被截断。以下是大模型的回复：\n {full_response} {BColors.ENDC}")
+                else: #完全没有
                     xml_content = full_response
                     text_content = ""
-                    print(f"{BColors.FAIL}[LLM_Prompt_Formatter]: 大模型的回复中未检测到<img>标签。以下是大模型的回复：{full_response} {BColors.ENDC}")
+                    print(f"{BColors.FAIL}[LLM_Prompt_Formatter]: 大模型的回复中未检测到<img>标签。以下是大模型的回复：\n {full_response} {BColors.ENDC}")
 
             xml_content=clean_prompt(xml_content,gemma_prompt)
             return (xml_content, text_content)
@@ -269,7 +280,7 @@ def clean_prompt(xml_content,gemma_prompt):
     match = re.search(r'(<img>.*?</img>)', xml_content, re.DOTALL | re.IGNORECASE)
 
     if not match:
-        print(f"{BColors.WARNING}[LLM_Prompt_Formatter]: LLM返回结果匹配失败，请检查输出结果，必要时停止工作流。{BColors.ENDC}")
+        print(f"{BColors.FAIL}[LLM_Prompt_Formatter]: LLM返回结果匹配失败，请检查输出结果，必要时停止工作流。{BColors.ENDC}")
         xml_content=repair_xml_custom(xml_content) #尝试修复一次
         return xml_content
 
@@ -340,6 +351,6 @@ def repair_xml_custom(xml_string):
 
         except Exception as e:
             # 修复失败
-            print(f"{BColors.WARNING}[LLM_Prompt_Formatter]:XML 损坏严重，无法修复！必要时请停止工作流。\n错误详情: {e}{BColors.ENDC}")
+            print(f"{BColors.FAIL}[LLM_Prompt_Formatter]:XML 损坏严重，无法修复！必要时请停止工作流。\n错误详情: {e}{BColors.ENDC}")
             print("-" * 30)
             return xml_string

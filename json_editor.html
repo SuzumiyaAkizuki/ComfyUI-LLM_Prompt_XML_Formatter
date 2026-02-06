@@ -72,7 +72,6 @@
 </header>
 
 <div class="container">
-    <!-- 左侧面板 -->
     <div class="panel" style="flex: 0.8;">
         <div class="panel-header">📝 文本 <-> JSON字符串</div>
         <textarea id="rawText" placeholder="在此输入多行文本..."></textarea>
@@ -86,13 +85,12 @@
             <button onclick="textToJson()">⬇️ 转为JSON串</button>
             <button onclick="jsonToText()">⬆️ 转回文本</button>
         </div>
-        <textarea id="jsonString" placeholder='在此输入JSON转义后的字符串 (例如 "Line1\nLine2")...'></textarea>
+        <textarea id="jsonString" placeholder='在此输入JSON转义后的字符串 (例如 "Line1\nLine2" 或直接粘贴 Line1\nLine2)...'></textarea>
         <div class="toolbar">
              <button onclick="copyToClipboard('jsonString')">📑 复制结果</button>
         </div>
     </div>
 
-    <!-- 右侧面板 -->
     <div class="panel">
         <div class="panel-header">
             <span>🌳 原生 JSON 编辑器</span>
@@ -120,9 +118,18 @@
         const jsonStr = JSON.stringify(raw);
         document.getElementById('jsonString').value = jsonStr;
     }
+    
+    // --- 修改点：更智能的转回文本逻辑 ---
     function jsonToText() {
         let jsonStr = document.getElementById('jsonString').value.trim();
         if (!jsonStr) return;
+
+        // 如果字符串首尾没有双引号，我们假设用户是想输入字符串，但省略了引号
+        // 自动补全引号，以便 JSON.parse 能正确将其解析为字符串
+        if (jsonStr.length > 0 && (!jsonStr.startsWith('"') || !jsonStr.endsWith('"'))) {
+            jsonStr = '"' + jsonStr + '"';
+        }
+
         try {
             const text = JSON.parse(jsonStr);
             if (typeof text !== 'string') {
@@ -134,6 +141,7 @@
             alert('JSON 解析失败，请确保格式正确。\n' + e.message);
         }
     }
+
     function loadFile(input, targetId) {
         const file = input.files[0];
         if (!file) return;
@@ -205,23 +213,21 @@
             keySpan.className = 'json-key';
             keySpan.contentEditable = (key !== 'root' && !isArrayItem);
             keySpan.textContent = isArrayItem ? `[${index}]` : key;
-            // 数组Key不加引号，对象Key视觉上加个引号感觉更像File但这里保持简洁
             if(!isArrayItem) {
-                // key编辑逻辑
                 keySpan.onblur = function() {
                     const newKey = this.textContent.trim();
                     if (newKey === key || newKey === '') { this.textContent = key; return; }
                     if (parent.hasOwnProperty(newKey)) { alert('Key已存在'); this.textContent = key; return; }
                     parent[newKey] = parent[key];
                     delete parent[key];
-                    renderEditor(); // 需要完全重绘来更新引用
+                    renderEditor(); 
                 };
             }
             row.appendChild(keySpan);
             row.appendChild(document.createTextNode(': '));
         }
 
-        // 3. Value 显示 (核心修改点)
+        // 3. Value 显示
         if (type === 'object' || type === 'array') {
             const typeSpan = document.createElement('span');
             typeSpan.style.color = '#888';
@@ -229,10 +235,8 @@
             typeSpan.textContent = type === 'object' ? '{Object}' : `[Array(${data.length})]`;
             row.appendChild(typeSpan);
         } else {
-            // 将值包裹在 span 里
             const valWrapper = document.createElement('span');
             
-            // 如果是字符串，加上视觉上的引号
             if (type === 'string') {
                 const q1 = document.createElement('span'); q1.className = 'quote'; q1.textContent = '"';
                 row.appendChild(q1);
@@ -242,9 +246,7 @@
             valSpan.className = `json-val type-${type}`;
             valSpan.contentEditable = true;
 
-            // --- 核心修改：使用 JSON.stringify 获取原始源码表示，然后去掉首尾引号 ---
             if (type === 'string') {
-                // 例如: 数据是 "A\nB" (长度3) -> stringify -> "A\\nB" (带引号) -> slice -> A\\nB
                 let rawString = JSON.stringify(data);
                 if (rawString.startsWith('"') && rawString.endsWith('"')) {
                     rawString = rawString.slice(1, -1);
@@ -254,19 +256,15 @@
                 valSpan.textContent = String(data);
             }
             
-            // --- 核心修改：编辑保存逻辑 ---
             valSpan.onblur = function() {
-                let text = this.textContent; // 获取用户输入的文本，例如 A\nB
+                let text = this.textContent; 
                 let newVal;
 
                 if (type === 'string') {
                     try {
-                        // 补上引号，尝试还原为 JavaScript 字符串
-                        // 如果用户输入 A\nB，拼接成 "A\nB"，parse 后变成 真实换行符的字符串
                         newVal = JSON.parse('"' + text + '"');
                     } catch (e) {
                         alert("字符串格式错误！\n如果您想输入引号，请使用 \\\" 转义。\n如果您想输入反斜杠，请使用 \\\\。");
-                        // 还原显示
                         let oldRaw = JSON.stringify(data).slice(1, -1);
                         this.textContent = oldRaw;
                         this.focus();
@@ -281,16 +279,12 @@
                     newVal = null;
                 }
 
-                // 更新数据
                 if (key === 'root') editorData = newVal;
                 else if (isArrayItem) parent[index] = newVal;
                 else parent[key] = newVal;
                 
-                // 为了保证颜色和格式正确，稍微刷新一下当前节点的样式（其实string类型不需要变）
-                // 只有类型变了才需要大刷，这里为了对齐数据，简单处理
                 if(type !== 'string') this.textContent = String(newVal); 
                 else {
-                    // 对于string，回显保存后的 raw 格式 (处理自动清理多余转义等情况)
                     let savedRaw = JSON.stringify(newVal).slice(1, -1);
                     this.textContent = savedRaw;
                 }
@@ -304,7 +298,7 @@
             }
         }
 
-        // 4. 操作按钮 (+ 和 x)
+        // 4. 操作按钮
         const controls = document.createElement('span');
         controls.className = 'node-controls';
         
@@ -329,7 +323,6 @@
             delBtn.textContent = '×';
             delBtn.style.padding = '0 6px';
             delBtn.onclick = () => {
-                // 不再弹窗确认，加快编辑速度，按需可恢复
                 if (isArrayItem) parent.splice(index, 1);
                 else delete parent[key];
                 renderEditor();

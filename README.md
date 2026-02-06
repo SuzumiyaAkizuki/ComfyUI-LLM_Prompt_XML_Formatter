@@ -15,6 +15,11 @@
 <details open>
 <summary> 更新说明 </summary>
 
+### 2026年02月06日更新1.2.0
+
+- 大幅重构代码，优化各项逻辑
+- 接下来我可能会在其他分支做一些实验性功能。比如提高danbooru标签的正确性，因为成功率可能不是特别高，所以暂时不会在main分支更新。
+
 ### 2026年02月01日更新1.1.9
 
 - 大幅重构代码，优化各项逻辑
@@ -99,6 +104,8 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
 
    - `model_name`：模型名称
 
+     > 以上三个字段，如果在配置文件`LPF_config.json`中解析到了内容，则会优先使用文件中的内容，在UI填写的不会生效。如果在文件中未能解析到有效内容，则可以在UI中填写。**如果在UI里填写了API KEY，则API KEY会在分享原图时泄露，请务必注意。**
+   
    - `thinking`：深度思考模式。显示`true`时，模型将进行深度思考，思考过程将在控制台显示。显示`false`时，模型不进行深度思考。推荐将其设置为`false`。
    
      > 目前，仅适配了OpenRouter平台、deepseek平台、Xiaomi MIMO平台和Gemini平台。部分平台不支持设置此字段，请用模型名称控制。
@@ -106,12 +113,12 @@ ComfyUI-NewBie-LLM-Formatter提供三个节点：
      > 例如，可以使用`deepseek-chat`来使用无思考的deepseek，使用`deepseek-reasoner`来使用有思考的deepseek。
 
    - 待转换文本
-
+   
    **输出参数：** 2个文本格式输出流
    
    - `xml_out`：`xml`格式提示词
    - `text_out`：大模型输出的额外解释信息
-
+   
    **使用说明：** 使用前，请先在`LPF_config.json`中填写API key、API url和模型名称。`LPF_config.json` 中的 `system_prompt` 字段为大模型使用的预设提示词，其中内置基本破限命令。以下是推荐的模型：
    
    | 模型名称                    | 平均每次使用成本/美元 | NSFW效果 | 输出质量 | 备注 |
